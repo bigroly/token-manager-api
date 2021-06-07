@@ -20,7 +20,7 @@ Parameters:
 
 Resources:
 
-  CarbudsApi:
+  TokenManagerApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Dev
@@ -64,7 +64,7 @@ Resources:
           Properties:
             Path: '/api/auth/login'
             Method: Post
-            RestApiId: !Ref "CarbudsApi" 
+            RestApiId: !Ref "TokenManagerApi" 
             Auth:
               Authorizer: 'NONE'
 
@@ -74,54 +74,39 @@ Resources:
           Properties:
             Path: '/api/token/{all+}'
             Method: ANY
-            RestApiId: !Ref "CarbudsApi" 
+            RestApiId: !Ref "TokenManagerApi" 
 
 
   # ---------------- DYNAMO TABLE DEFINITIONS ----------------
 
-  ParkingLocationsTable:
+  TokensTable:
     Type: 'AWS::DynamoDB::Table'
     DeletionPolicy: Delete
     Properties:
       AttributeDefinitions:
-        - AttributeName: Uuid
+        - AttributeName: AppName
           AttributeType: S
-        - AttributeName: Longitude
-          AttributeType: N
-        - AttributeName: Latitude
-          AttributeType: N
+        - AttributeName: Token
+          AttributeType: S
       KeySchema:
-        - AttributeName: Uuid
+        - AttributeName: AppName
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: LongitudeIndex
+        - IndexName: TokenIndex
           KeySchema:
-          - AttributeName: Longitude
+          - AttributeName: Token
             KeyType: HASH
           Projection:
-            NonKeyAttributes:
-            - domain
-            ProjectionType: INCLUDE
+            ProjectionType: ALL
           ProvisionedThroughput:
-            ReadCapacityUnits: 1
-            WriteCapacityUnits: 1
-        - IndexName: LatitudeIndex
-          KeySchema:
-          - AttributeName: Latitude
-            KeyType: HASH
-          Projection:
-            NonKeyAttributes:
-            - domain
-            ProjectionType: INCLUDE
-          ProvisionedThroughput:
-            ReadCapacityUnits: 1
-            WriteCapacityUnits: 1
+            ReadCapacityUnits: 2
+            WriteCapacityUnits: 2
       ProvisionedThroughput: 
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
-      TableName: carbuds-parkingLocations
+      TableName: tokenMgr-tokens
 
 Outputs:
   ApiURL:
     Description: raw API endpoint URL for this environment
-    Value: !Sub 'https://${CarbudsApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/'
+    Value: !Sub 'https://${TokenManagerApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/'
