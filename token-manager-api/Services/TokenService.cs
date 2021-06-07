@@ -14,6 +14,7 @@ namespace tokenManagerApi.Services
   {
     Task<List<AppToken>> ListTokens();
     Task<bool> AddEditToken(AppToken record);
+    Task<bool> DeleteToken(AppToken record);
   }
 
   public class TokenService: ITokenService
@@ -55,6 +56,20 @@ namespace tokenManagerApi.Services
       };
       var response = await _dynamoDb.PutItemAsync(putReq);
 
+      return true;
+    }
+
+    public async Task<bool> DeleteToken(AppToken record)
+    {
+      var delReq = new DeleteItemRequest()
+      {
+        TableName = _config.GetValue<string>("DynamoDb:TokensTable"),
+        Key = new Dictionary<string, AttributeValue>() {
+            { "AppName", new AttributeValue { S = record.AppName } },
+        }
+      };
+
+      var deleteComplete = await _dynamoDb.DeleteItemAsync(delReq);
       return true;
     }
   }

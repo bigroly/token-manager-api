@@ -69,11 +69,25 @@ Resources:
               Authorizer: 'NONE'
 
         #------------- Tokens -------------
-        Bookings:
+        TokensListToken:
           Type: Api
           Properties:
-            Path: '/api/token/{all+}'
-            Method: ANY
+            Path: '/api/tokens'
+            Method: Get
+            RestApiId: !Ref "TokenManagerApi" 
+
+        TokensAddUpdateToken:
+          Type: Api
+          Properties:
+            Path: '/api/tokens'
+            Method: Post
+            RestApiId: !Ref "TokenManagerApi" 
+
+        TokensDeleteToken:
+          Type: Api
+          Properties:
+            Path: '/api/tokens'
+            Method: Delete
             RestApiId: !Ref "TokenManagerApi" 
 
 

@@ -61,5 +61,25 @@ namespace tokenManagerApi.Controllers
         });
       }
     }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteToken(DeleteTokenRequest req)
+    {
+      try
+      {
+        return Ok(new DeleteTokenResponse()
+        {
+          Success = await _tokenService.DeleteToken(req.Token)
+        });
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new DeleteTokenResponse()
+        {
+          Success = false,
+          ErrorMessage = e.Message
+        });
+      }
+    }
   }
 }
