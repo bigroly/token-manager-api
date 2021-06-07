@@ -57,6 +57,7 @@ namespace tokenManagerApi
       }
 
       app.UseHttpsRedirection();
+      app.UseCors(MyAllowSpecificOrigins);
 
       app.UseRouting();
 
