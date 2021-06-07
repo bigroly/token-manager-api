@@ -1,6 +1,7 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace tokenManagerApi.Services
     Task<List<AppToken>> ListTokens();
     Task<bool> AddEditToken(AppToken record);
     Task<bool> DeleteToken(AppToken record);
+    Task<bool> ValidateToken(AppToken token);
   }
 
   public class TokenService: ITokenService
@@ -71,6 +73,53 @@ namespace tokenManagerApi.Services
 
       var deleteComplete = await _dynamoDb.DeleteItemAsync(delReq);
       return true;
+    }
+
+    public async Task<bool> ValidateToken(AppToken token)
+    {
+      var existingToken = await GetToken(token.AppName);
+
+      DateTime localNow = DateTime.Now;
+      long unixNow = ((DateTimeOffset)localNow).ToUnixTimeSeconds();
+
+      if(unixNow > token.ExpiryUtc)
+      {
+        throw new UnauthorizedAccessException("API token Expired");
+      }
+
+      string requestSerialized = JsonConvert.SerializeObject(token);
+      string tokenSerialized = JsonConvert.SerializeObject(existingToken);
+
+      if(requestSerialized != tokenSerialized)
+      {
+        throw new Exception("Invalid API token provided");
+      }
+
+      return true;
+    }
+
+    private async Task<AppToken> GetToken(string appName)
+    {
+
+      Dictionary<string, AttributeValue> key = new Dictionary<string, AttributeValue>
+      {
+        { "AppName", new AttributeValue { S = appName } },
+      };
+
+      GetItemRequest itemReq = new GetItemRequest()
+      {
+        TableName = _config.GetValue<string>("DynamoDb:TokensTable"),
+        Key = key
+      };
+
+      var dbResult = await _dynamoDb.GetItemAsync(itemReq);      
+
+      if(dbResult.Item.Count == 0)
+      {
+        throw new KeyNotFoundException("API token Not Found");
+      }
+
+      return _dbHelper.ToObjectFromDynamoResult<AppToken>(dbResult.Item);
     }
   }
 }

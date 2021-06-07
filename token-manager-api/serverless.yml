@@ -90,6 +90,15 @@ Resources:
             Method: Delete
             RestApiId: !Ref "TokenManagerApi" 
 
+        TokensValidateToken:
+          Type: Api
+          Properties:
+            Path: '/api/tokens/validate'
+            Method: Post
+            RestApiId: !Ref "TokenManagerApi"
+            Auth:
+              Authorizer: 'NONE'
+
 
   # ---------------- DYNAMO TABLE DEFINITIONS ----------------
 

@@ -81,5 +81,33 @@ namespace tokenManagerApi.Controllers
         });
       }
     }
+
+    [HttpPost("validate")]
+    public async Task<IActionResult> ValidateToken(PostValidateTokenRequest request)
+    {
+      //conforming to the responses dictated in spec .yml file
+      try
+      {
+        bool tokenOK = await _tokenService.ValidateToken(request.ApiToken);
+        return Ok("API Token is valid");
+      }
+      catch (KeyNotFoundException e)
+      {
+        return NotFound(e.Message);
+      }
+      catch(UnauthorizedAccessException e)
+      {
+        return Unauthorized(e.Message);
+      }
+      catch(Exception e)
+      {
+        if (e.Message == "Invalid API token provided")
+        {
+          return BadRequest(e.Message);
+        }
+        return StatusCode(500);
+      }      
+    }
+
   }
 }
