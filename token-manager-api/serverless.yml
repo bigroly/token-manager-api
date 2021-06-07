@@ -1,0 +1,127 @@
+﻿AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+Description: >-
+  An AWS Serverless Application that uses the ASP.NET Core framework running in
+  Amazon Lambda.
+
+Globals:
+  Api:
+    Cors: 
+      AllowOrigin: "'*'"
+      AllowHeaders: "'*'"
+
+Parameters:
+  AspNetCoreEnv:
+    Type: String
+    Default: Development
+  UserpoolArn:
+    Type: String
+    Default: arn:aws:cognito-idp:ap-southeast-2:869393488965:userpool/ap-southeast-2_hKuSDoKtV
+
+Resources:
+
+  CarbudsApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Dev
+      Auth:
+        DefaultAuthorizer: CognitoUserPool
+        Authorizers:
+          CognitoUserPool:
+            UserPoolArn: !Ref UserpoolArn
+        AddDefaultAuthorizerToCorsPreflight: false
+
+  AspNetCoreApi:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: token-manager-api::token-manager-api.LambdaEntryPoint::FunctionHandlerAsync
+      Runtime: dotnetcore3.1
+      CodeUri: ''
+      MemorySize: 1024
+      Timeout: 30
+      Role: null
+      Policies:
+        - AWSLambda_FullAccess
+        - AWSLambdaDynamoDBExecutionRole
+        - AmazonDynamoDBFullAccess
+        - AmazonCognitoPowerUser
+        - Statement:
+          - Sid: SSMParametersPolicy
+            Effect: Allow
+            Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+            - ssm:GetParametersByPath
+            Resource: '*'
+      Environment:
+        Variables:
+          ASPNETCORE_ENVIRONMENT: !Ref AspNetCoreEnv
+      Events:
+
+        #------------- Auth -------------
+        AuthLogin:
+          Type: Api
+          Properties:
+            Path: '/api/auth/login'
+            Method: Post
+            RestApiId: !Ref "CarbudsApi" 
+            Auth:
+              Authorizer: 'NONE'
+
+        #------------- Tokens -------------
+        Bookings:
+          Type: Api
+          Properties:
+            Path: '/api/token/{all+}'
+            Method: ANY
+            RestApiId: !Ref "CarbudsApi" 
+
+
+  # ---------------- DYNAMO TABLE DEFINITIONS ----------------
+
+  ParkingLocationsTable:
+    Type: 'AWS::DynamoDB::Table'
+    DeletionPolicy: Delete
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: Uuid
+          AttributeType: S
+        - AttributeName: Longitude
+          AttributeType: N
+        - AttributeName: Latitude
+          AttributeType: N
+      KeySchema:
+        - AttributeName: Uuid
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: LongitudeIndex
+          KeySchema:
+          - AttributeName: Longitude
+            KeyType: HASH
+          Projection:
+            NonKeyAttributes:
+            - domain
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+        - IndexName: LatitudeIndex
+          KeySchema:
+          - AttributeName: Latitude
+            KeyType: HASH
+          Projection:
+            NonKeyAttributes:
+            - domain
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+      TableName: carbuds-parkingLocations
+
+Outputs:
+  ApiURL:
+    Description: raw API endpoint URL for this environment
+    Value: !Sub 'https://${CarbudsApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/'

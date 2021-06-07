@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-namespace token_manager_api.Controllers
+namespace tokenManagerApi.Controllers
 {
     [Route("api/[controller]")]
     public class ValuesController : ControllerBase
