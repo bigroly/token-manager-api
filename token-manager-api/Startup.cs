@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using tokenManagerApi.Helpers;
 using tokenManagerApi.Services;
 
 namespace tokenManagerApi
@@ -35,9 +36,14 @@ namespace tokenManagerApi
         builder => builder.WithOrigins("*"));
       });
 
+      //AWS Services
       services.AddAWSService<Amazon.CognitoIdentityProvider.IAmazonCognitoIdentityProvider>();
       services.AddAWSService<Amazon.DynamoDBv2.IAmazonDynamoDB>();
 
+      //Helpers
+      services.AddSingleton<IDynamoDbHelper, DynamoDbHelper>();
+
+      //Service Layer Services
       services.AddSingleton<IAuthService, AuthService>();
       services.AddSingleton<ITokenService, TokenService>();
     }
