@@ -34,7 +34,7 @@ Resources:
   AspNetCoreApi:
     Type: 'AWS::Serverless::Function'
     Properties:
-      Handler: token-manager-api::token-manager-api.LambdaEntryPoint::FunctionHandlerAsync
+      Handler: tokenManagerApi::tokenManagerApi.LambdaEntryPoint::FunctionHandlerAsync
       Runtime: dotnetcore3.1
       CodeUri: ''
       MemorySize: 1024
