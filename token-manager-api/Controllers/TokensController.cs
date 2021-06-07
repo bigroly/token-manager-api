@@ -28,7 +28,7 @@ namespace tokenManagerApi.Controllers
           new GetListTokensResponse()
           {
             Success = true,
-            Tokens = await _tokenService.ListTokens()            
+            Tokens = await _tokenService.ListTokens()
           }
         );
       }
@@ -42,10 +42,24 @@ namespace tokenManagerApi.Controllers
       }
     }
 
-    //[HttpPost]
-    //public IActionResult AddUpdateToken()
-    //{
-
-    //}
+    [HttpPost]
+    public async Task<IActionResult> AddUpdateToken(PostAddUpdateTokenRequest req)
+    {
+      try
+      {
+        return Ok(new PostAddUpdateTokenResponse()
+        {
+          Success = await _tokenService.AddEditToken(req.Token)
+        });
+      }
+      catch (Exception e)
+      {
+        return BadRequest(new PostAddUpdateTokenResponse()
+        {
+          Success = false,
+          ErrorMessage = e.Message
+        });
+      }
+    }
   }
 }
